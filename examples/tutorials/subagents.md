@@ -1,115 +1,180 @@
-# Subagents in Claude Code
+# Subagents: Specialized AI Assistants for Your Projects
 
-Running multiple Claude instances for parallel work.
+## What Are Subagents?
 
-## Overview
+Subagents are specialized AI assistants you configure for specific tasks or projects. Instead of giving the same context every time you start a new chat, you define it once and the agent always knows what to do.
 
-Subagents let Claude spawn additional Claude instances to handle tasks in parallel. Think of it as delegation - the main Claude coordinates while subagents do focused work.
+Think of it like this: your main AI assistant is a generalist. Subagents are specialists—a writing editor who knows your voice, a code reviewer who knows your standards, or a research assistant who knows your domain.
 
-## When to Use Subagents
+## Why Use Them?
 
-**Good use cases:**
-- Processing multiple files simultaneously
-- Research tasks that can be parallelized
-- Batch operations (create 10 tasks, update 5 files)
+**1. No more repeating yourself**
+Instead of pasting "here's my writing style, here's my book structure, here are the editing rules..." every session, the subagent already knows.
 
-**Not ideal for:**
-- Sequential work where each step depends on the previous
-- Simple single-file operations
-- Tasks requiring heavy coordination
+**2. Consistent outputs**
+The agent follows the same rules every time. Your book chapters will have consistent voice. Your code reviews will check the same things.
 
-## How It Works
+**3. Faster context loading**
+The subagent reads only what it needs. A writing agent doesn't need your codebase context.
 
-```
-┌─────────────────────────────────────┐
-│         Main Claude (Coordinator)    │
-│                                     │
-│  "Process these 5 backlog items"    │
-└──────────┬──────────────────────────┘
-           │
-           ├──► Subagent 1: "Create task for item 1"
-           ├──► Subagent 2: "Create task for item 2"  
-           ├──► Subagent 3: "Create task for item 3"
-           ├──► Subagent 4: "Research item 4"
-           └──► Subagent 5: "Check for duplicates of item 5"
-           
-           │ (all run in parallel)
-           ▼
-┌─────────────────────────────────────┐
-│  Main Claude collects results       │
-│  and presents summary               │
-└─────────────────────────────────────┘
-```
+**4. Shareable with your team**
+Commit subagents to your repo. Now everyone on the team has the same specialized assistants.
 
-## Example: Parallel Task Creation
+## How to Set Them Up
 
-Without subagents (sequential):
-```
-Creating task 1... done (2s)
-Creating task 2... done (2s)
-Creating task 3... done (2s)
-Total: 6 seconds
-```
+### Claude Code
 
-With subagents (parallel):
-```
-Creating tasks 1, 2, 3 in parallel... done
-Total: 2 seconds
-```
-
-## PersonalOS Subagent Patterns
-
-### Pattern 1: Batch Backlog Processing
-
-When you have many backlog items, Claude can delegate:
+Create a markdown file in `.claude/agents/`:
 
 ```
-You: Process my backlog (15 items)
-
-Claude (coordinator):
-- Subagent 1-5: Check items 1-5 for duplicates
-- Subagent 6-10: Categorize items 6-10
-- Subagent 11-15: Create task files for clear items
-
-→ All results collected and presented as unified summary
+your-repo/
+└── .claude/
+    └── agents/
+        └── my-agent.md
 ```
 
-### Pattern 2: Research Aggregation
+**Format:**
+```markdown
+---
+name: my-agent
+description: When to use this agent (shown in agent picker)
+tools: Read, Edit, Write, Grep, Glob
+model: sonnet
+---
 
-```
-You: Research our top 3 competitors
+# System Prompt
 
-Claude (coordinator):
-- Subagent 1: Research Competitor A
-- Subagent 2: Research Competitor B
-- Subagent 3: Research Competitor C
-
-→ Results synthesized into single analysis
-```
-
-### Pattern 3: Multi-File Updates
-
-```
-You: Add "due_date: 2024-02-01" to all P0 tasks
-
-Claude (coordinator):
-- Identifies 4 P0 task files
-- Spawns 4 subagents to update each file
-- Confirms all updates completed
+Your instructions here. Tell the agent:
+- What it does
+- What files to reference
+- Rules to follow
+- Output format expected
 ```
 
-## Limitations
+**Use it:** Run `/agents` in Claude Code to see and select your agents.
 
-1. **Context isn't shared** - Each subagent starts fresh, doesn't see what others are doing
-2. **Coordination overhead** - Sometimes sequential is simpler
-3. **Resource usage** - More subagents = more API calls
+### Factory
+
+Create a markdown file in `.factory/droids/`:
+
+```
+your-repo/
+└── .factory/
+    └── droids/
+        └── my-droid.md
+```
+
+**Format:**
+```markdown
+---
+name: my-droid
+description: When to use this droid
+model: inherit
+tools: ["Read", "Edit", "Grep", "Glob", "LS"]
+---
+
+# System Prompt
+
+Your instructions here.
+```
+
+**Key differences from Claude Code:**
+- `tools` is an array with quotes: `["Read", "Edit"]`
+- Tool names differ slightly: `LS` instead of `Bash(ls)`, `FetchUrl` instead of `WebFetch`
+- Use `model: inherit` to match the parent session
+
+## Real Example: Blog Writing Agent
+
+I created a subagent for writing a blog post. Here's what it includes:
+
+```markdown
+---
+name: blog-agent
+description: Agent for writing and editing ai product playbook along with aman
+tools: Read, Glob, Grep, Edit, Write, WebSearch, WebFetch
+model: sonnet
+---
+
+# Blog post agent
+
+You are a specialized writing agent for my blog.
+
+## Key Reference Files
+Before writing, ALWAYS read:
+- `Table of contents.md` - structure
+- `aman_voice_analysis.md` - My writing voice
+- `learnings.md` - Lessons from editing previous posts
+
+## Writing Rules
+- Target 2,500-3,000 words per post
+- Start with a hook (quote or question)
+- Use numbered steps for tutorials
+- Cut 30-40% ruthlessly - if it doesn't teach, remove it
+...
+```
+
+Now when I say "help me write this post", the agent already knows my voice, the book structure, and the editing rules I learned from the previous post.
 
 ## Tips
 
-- Let Claude decide when to use subagents - it knows when parallel helps
-- For simple operations, sequential is often faster
-- Subagents work best for independent, parallelizable tasks
+**Start simple.** Your first subagent can be 10 lines. Add detail as you learn what's missing.
 
----
+**Reference files, don't duplicate.** Point to existing docs rather than copying content into the agent definition. Keeps things maintainable.
 
-*Next: [Tool Calling & MCP](tool-calling.md)*
+**Restrict tools.** A writing agent doesn't need `Execute`. Fewer tools = more focused behavior.
+
+**Use description well.** This is how the AI decides when to suggest this agent. Make it clear: "Use for writing posts" not "post stuff".
+
+## Quick Start
+
+1. Create the directory: `mkdir -p .claude/agents` (or `.factory/droids`)
+2. Create `my-agent.md` with the format above
+3. Add your instructions
+4. Test it out
+
+That's it. You now have a specialist on your team.
+
+## How I Created My Subagent Without Writing a Single Line
+
+Here's the actual workflow I used to create a PRD writing subagent. I didn't write the agent definition myself—I had Claude Code do it by pointing it to my existing context files.
+
+### The Prompt
+
+I started with:
+> "I want a subagent to help me write PRDs. How do I set that up in Claude Code?"
+
+Claude Code looked up its own documentation on subagents and explained the format.
+
+Then I said:
+> "Yes let's create it. Some more context:"
+
+And pointed to three files:
+- `prd_template.md` - Our team's standard PRD structure
+- `writing_guidelines.md` - How we write at the company (tone, length, formatting)
+- `good_prd_examples/` - A folder with 3 PRDs that got good feedback
+
+### What Happened
+
+Claude Code:
+1. Read all the files to understand the context
+2. Extracted the template structure into required sections
+3. Turned the writing guidelines into DO/DON'T rules
+4. Analyzed the good examples to identify patterns
+5. Created the `.claude/agents/prd-writer.md` file with everything structured properly
+
+I then asked it to do the same for Factory droids. It fetched the Factory docs, learned the format differences, and created `.factory/droids/prd-writer.md` with the correct syntax.
+
+### Why This Works
+
+The key insight: **you probably already have the context documented somewhere**. Voice guides, style docs, lessons learned, project briefs—these exist in your repo or notes. Instead of manually translating them into a subagent definition, point the AI at them and let it do the synthesis.
+
+### The Pattern
+
+```
+1. "I want a subagent for [project/task]"
+2. "Here are the context files: [list paths]"
+3. Let the AI read them and create the agent
+4. Review and tweak as needed
+```
+
+This took me about 2 minutes. Writing the agent definition manually would have taken 20+, and I probably would have forgotten half the rules from my learnings doc.
