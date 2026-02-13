@@ -7,10 +7,16 @@ Tasks/**/*.md
 !Tasks/README.md
 BACKLOG.md
 
+# Track shared example/spec tasks
+!Tasks/fitness-chatbot/**/*.md
+
 # Personal knowledge files
 Knowledge/**/*.md
 !Knowledge/.gitkeep
 !Knowledge/README.md
+
+# Track shared example/spec content
+!Knowledge/fitness-chatbot/**/*.md
 
 # Personal configuration
 # (Keep personal copies local; templates are tracked separately)
