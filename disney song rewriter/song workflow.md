@@ -1,0 +1,1 @@
+rewrite the first stanza and chorus of a disney song to make fun of itself, in the same file
